@@ -1,0 +1,8 @@
+setuptools
+numpy
+pandas
+scipy
+matplotlib
+xarray
+pywavelets
+eofs

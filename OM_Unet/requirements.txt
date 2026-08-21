@@ -1,0 +1,15 @@
+# Install PyTorch separately according to your Python version and CUDA environment:
+# https://pytorch.org/get-started/locally/
+torch
+
+# Data processing and training
+numpy
+xarray
+netCDF4
+tomli
+tqdm
+
+# Visualization
+matplotlib
+cartopy
+scipy

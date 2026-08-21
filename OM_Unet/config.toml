@@ -1,0 +1,58 @@
+# train model
+model_type = 'ResCBAM_Unet_4L'
+epochs = 50
+batch_size = 32
+initial_lr = 1.6e-4
+scheduler_factor = 0.5
+lr_scheduler_times = 4
+scheduler_patience = 3
+scheduler_threshold = 5e-5
+huber_beta = 1.0
+seed = 42
+
+# train acceleration
+device = 'cuda'
+num_workers = 4
+use_amp = true
+use_compile = true
+use_channels_last = true
+
+# data
+target_ds = 'glory'
+augmentation_prob = 0.5
+shuffle_mode = 'block'  # 'block', 'global', 'sequential'
+depth = 13
+
+# data range
+year_start = 1993
+year_end = 2023
+
+# china coastal sea area
+lat_min = 11
+lat_max = 43
+lon_min = 104
+lon_max = 136
+ 
+[ds_split]
+train = [1993, 2017]
+valid = [2018, 2023]
+
+[ds_info.glory]
+vars = ['thetao']
+path = 'data/GLORYS4V1_thetao_600'
+
+[ds_info.ssd]
+vars = ['sst', 'sla', 'uwnd', 'vwnd', ]  # 'wsc', 
+path = 'data/SSD_5'
+
+# [ds_info.ssh]
+# vars = ['sla',]
+# path = 'data/GOGL4SSH'
+
+# [ds_info.sst]
+# vars = ['sst',]
+# path = 'data/OISST'
+
+# [ds_info.wind]
+# vars = ['uwnd', 'vwnd', 'wsc',]
+# path = 'data/CCMP'

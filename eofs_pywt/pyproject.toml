@@ -1,0 +1,13 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools>=49.0"
+]
+
+[project]
+name = "eofs_pywt"
+version = "0.1"
+readme = "README.md"
+description = "The algorithm implementation of eofs and pywt"
+requires-python = ">=3.8"
+dependencies = { file = ["requirements.txt"] }
