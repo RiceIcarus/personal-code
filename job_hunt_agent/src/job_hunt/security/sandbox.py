@@ -1,19 +1,20 @@
-import os
-from fnmatch import fnmatch
+from fnmatch import fnmatchcase
 from pathlib import Path
 
-def get_workspace_root() -> Path:
-    """Return the current working directory as the sandbox boundary.
+from job_hunt.paths import WORKSPACE_ROOT
 
-    Evaluated at call time so changing directory between agent runs
-    updates the sandbox range. This is the same approach Claude Code uses —
-    the workspace is wherever you launched it.
+
+def get_workspace_root() -> Path:
+    """Return the startup working directory as the sandbox boundary.
+
+    The value is captured once when job_hunt starts, so later process cwd changes
+    do not change the workspace for file tools or checkpoint selection.
     """
-    return Path.cwd().resolve()
+    return WORKSPACE_ROOT
 
 # Paths matching any of these patterns are always denied
 SENSITIVE_PATTERNS = [
-    '*.env',
+    '*.env*',
     '*.pem',
     '*.key',
     '*.pfx',
@@ -27,6 +28,7 @@ SENSITIVE_PATTERNS = [
     '*token*',
     '*.htpasswd',
     '.git/config',
+    '*/.git/config',
     '.git-credentials',
     '/etc/passwd',
     '/etc/shadow',
@@ -34,6 +36,28 @@ SENSITIVE_PATTERNS = [
     '~/.aws/*',
     '~/.gcloud/*',
 ]
+
+
+def _normalize_for_match(value: str | Path) -> str:
+    """Normalize path separators and case for cross-platform matching."""
+    return str(value).replace('\\', '/').casefold()
+
+
+def _find_sensitive_pattern(path: Path, workspace: Path) -> str | None:
+    """Return the matching sensitive pattern, if any."""
+    relative_path = path.relative_to(workspace)
+    candidates = (
+        _normalize_for_match(relative_path),
+        _normalize_for_match(path),
+    )
+
+    for pattern in SENSITIVE_PATTERNS:
+        pattern_path = Path(pattern).expanduser() if pattern.startswith('~') else pattern
+        normalized_pattern = _normalize_for_match(pattern_path)
+        if any(fnmatchcase(candidate, normalized_pattern) for candidate in candidates):
+            return pattern
+
+    return None
 
 
 def validate_path(file_path: str | Path) -> tuple[Path, str]:
@@ -52,11 +76,12 @@ def validate_path(file_path: str | Path) -> tuple[Path, str]:
     except ValueError:
         return path, f'path is outside workspace ({workspace}): {path}'
 
-    # Deny sensitive files
-    normalized = str(path)
-    for pattern in SENSITIVE_PATTERNS:
-        check = os.path.expanduser(pattern) if pattern.startswith('~') else pattern
-        if fnmatch(normalized, check):
-            return path, f'sensitive file blocked by pattern "{pattern}": {path}'
+    # Deny sensitive files. Match both relative and absolute paths so patterns
+    # such as .git/config work consistently on Windows and Unix-like systems.
+    sensitive_pattern = _find_sensitive_pattern(path, workspace)
+    if sensitive_pattern:
+        return path, (
+            f'sensitive file blocked by pattern "{sensitive_pattern}": {path}'
+        )
 
     return path, ''

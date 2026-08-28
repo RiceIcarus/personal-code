@@ -18,6 +18,8 @@ def create_security_middleware() -> list:
             interrupt_on={
                 # Any tool NOT listed here passes through without approval.
                 # Add new tools here to require manual approval.
+                'calculate': False,     # local calculation without side effects
+                'list_files': False,    # lists non-sensitive workspace entries
                 'read_file': True,        # could read sensitive local files
                 'tavily_search': False,   # read-only external, safe to auto-approve
             },
