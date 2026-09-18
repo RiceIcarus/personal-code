@@ -1,2 +1,0 @@
-[console_scripts]
-job-hunt = job_hunt.cli:chat
